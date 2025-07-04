@@ -35,7 +35,12 @@ router.get("/list", async (c) => {
 
     // 3. 쌩쿼리로 메모 조회
     const memos = await sql`
-      SELECT *
+      SELECT 
+      idp
+      ,title
+      ,content
+      ,user_idp as userIdp
+      ,created_dt as createdDt
       FROM t_memo
       WHERE user_idp = ${tokenData.idp}
       ORDER BY created_dt DESC
@@ -71,7 +76,12 @@ router.get("/get_memo_by_idp", async (c) => {
     }
 
     const rows = await sql`
-      SELECT *
+      SELECT 
+      idp
+      ,title
+      ,content
+      ,user_idp as userIdp
+      ,created_dt as createdDt
       FROM t_memo
       WHERE idp = ${idp}
       LIMIT 1
