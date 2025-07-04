@@ -119,22 +119,34 @@ router.post("/upsert", async (c) => {
             result.message = "제목이나 내용을 입력해주세요";
             return c.json(result);
         }
+        let upserted;
         // 3. UPSERT 실행
-        const [upserted] = await (0, db_js_1.sql) `
-      INSERT INTO t_memo (idp, title, content, user_idp)
+        if (idp > 0) {
+            // UPDATE
+            const [updated] = await (0, db_js_1.sql) `
+      UPDATE t_memo
+      SET
+        title = ${title},
+        content = ${content},
+        user_idp = ${tokenData.idp}
+      WHERE idp = ${idp}
+      RETURNING *
+    `;
+            upserted = updated;
+        }
+        else {
+            // INSERT
+            const [inserted] = await (0, db_js_1.sql) `
+      INSERT INTO t_memo (title, content, user_idp)
       VALUES (
-        ${idp > 0 ? idp : null},
         ${title},
         ${content},
         ${tokenData.idp}
       )
-      ON CONFLICT (idp)
-      DO UPDATE SET
-        title = EXCLUDED.title,
-        content = EXCLUDED.content,
-        user_idp = EXCLUDED.user_idp
       RETURNING *
     `;
+            upserted = inserted;
+        }
         result.data = upserted;
         return c.json(result);
     }

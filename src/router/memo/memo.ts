@@ -134,22 +134,33 @@ router.post("/upsert", async (c) => {
       return c.json(result);
     }
 
+    let upserted:any;
     // 3. UPSERT 실행
-    const [upserted] = await sql`
-      INSERT INTO t_memo (idp, title, content, user_idp)
+    if (idp > 0) {
+    // UPDATE
+    const [updated] = await sql`
+      UPDATE t_memo
+      SET
+        title = ${title},
+        content = ${content},
+        user_idp = ${tokenData.idp}
+      WHERE idp = ${idp}
+      RETURNING *
+    `;
+    upserted=updated
+    } else {
+    // INSERT
+    const [inserted] = await sql`
+      INSERT INTO t_memo (title, content, user_idp)
       VALUES (
-        ${idp > 0 ? idp : null},
         ${title},
         ${content},
         ${tokenData.idp}
       )
-      ON CONFLICT (idp)
-      DO UPDATE SET
-        title = EXCLUDED.title,
-        content = EXCLUDED.content,
-        user_idp = EXCLUDED.user_idp
       RETURNING *
     `;
+    upserted=inserted
+  }
 
     result.data = upserted;
     return c.json(result);
